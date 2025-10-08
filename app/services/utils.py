@@ -12,7 +12,13 @@ from nltk.corpus import stopwords
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
-    nltk.download('stopwords', quiet=True)
+    try:
+        nltk.download('stopwords', quiet=True)
+    except Exception as e:
+        # En entornos con permisos restringidos (Docker, Cloud Run)
+        # los datos ya deberían estar descargados en build time
+        print(f"Warning: Could not download NLTK stopwords: {e}")
+        print("Assuming stopwords are already available in the system.")
 
 
 class TextUtils:

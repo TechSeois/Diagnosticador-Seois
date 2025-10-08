@@ -30,15 +30,20 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Descargar modelo MiniLM en build time para optimizar startup
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
-# Descargar datos de NLTK
-RUN python -c "import nltk; nltk.download('stopwords', quiet=True)"
+# Descargar datos de NLTK en directorio con permisos apropiados
+ENV NLTK_DATA=/usr/local/share/nltk_data
+RUN mkdir -p ${NLTK_DATA} && \
+    python -c "import nltk; nltk.download('stopwords', download_dir='${NLTK_DATA}', quiet=True)" && \
+    chmod -R 755 ${NLTK_DATA}
 
 # Copiar código de la aplicación
 COPY app/ ./app/
 
 # Crear usuario no-root para seguridad
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-RUN chown -R appuser:appuser /app
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    chown -R appuser:appuser /app
+
+# Cambiar a usuario no-root
 USER appuser
 
 # Exponer puerto (Cloud Run default)
