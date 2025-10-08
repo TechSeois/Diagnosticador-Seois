@@ -33,11 +33,27 @@ class NLPService:
         try:
             # Inicializar KeyBERT con MiniLM
             logger.info("Inicializando KeyBERT con modelo MiniLM...")
-            self.sentence_transformer = SentenceTransformer('all-MiniLM-L6-v2')
+            
+            # Intentar cargar el modelo desde el caché del sistema
+            import os
+            cache_dir = os.environ.get('SENTENCE_TRANSFORMERS_HOME') or os.environ.get('TRANSFORMERS_CACHE')
+            
+            if cache_dir:
+                logger.info(f"Usando directorio de caché: {cache_dir}")
+                self.sentence_transformer = SentenceTransformer('all-MiniLM-L6-v2', cache_folder=cache_dir)
+            else:
+                self.sentence_transformer = SentenceTransformer('all-MiniLM-L6-v2')
+                
             self.keybert_model = KeyBERT(model=self.sentence_transformer)
             
             logger.info("Modelos NLP inicializados correctamente")
             
+        except PermissionError as e:
+            logger.error(f"Error de permisos inicializando modelos NLP: {e}")
+            logger.error("Los modelos deben estar pre-descargados en el directorio de caché del sistema")
+            logger.error("Verifica las variables de entorno: TRANSFORMERS_CACHE, HF_HOME, SENTENCE_TRANSFORMERS_HOME")
+            raise RuntimeError(f"No se pueden cargar los modelos NLP debido a problemas de permisos. "
+                             f"Asegúrate de que los modelos estén pre-descargados en el build de Docker.")
         except Exception as e:
             logger.error(f"Error inicializando modelos NLP: {e}")
             raise
