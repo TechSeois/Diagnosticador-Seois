@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - API_KEY=${API_KEY:-your-secret-api-key-here}
+      - MAX_CONCURRENT_REQUESTS=${MAX_CONCURRENT_REQUESTS:-10}
+      - DEFAULT_TIMEOUT=${DEFAULT_TIMEOUT:-15}
+      - MAX_URLS_PER_DOMAIN=${MAX_URLS_PER_DOMAIN:-100}
+      - W1_FREQUENCY=${W1_FREQUENCY:-0.3}
+      - W2_TFIDF=${W2_TFIDF:-0.25}
+      - W3_COOCCURRENCE=${W3_COOCCURRENCE:-0.2}
+      - W4_POSITION_TITLE=${W4_POSITION_TITLE:-0.15}
+      - W5_SIMILARITY_BRAND=${W5_SIMILARITY_BRAND:-0.1}
+      - YAKE_MAX_NGRAM_SIZE=${YAKE_MAX_NGRAM_SIZE:-2}
+      - YAKE_DEDUPLICATION_THRESHOLD=${YAKE_DEDUPLICATION_THRESHOLD:-0.7}
+      - KEYBERT_MAX_NGRAM_SIZE=${KEYBERT_MAX_NGRAM_SIZE:-2}
+      - KEYBERT_DIVERSITY=${KEYBERT_DIVERSITY:-0.5}
+      - SIMILARITY_THRESHOLD=${SIMILARITY_THRESHOLD:-0.85}
+      - ECOMMERCE_THRESHOLD=${ECOMMERCE_THRESHOLD:-0.6}
+      - MIXED_THRESHOLD=${MIXED_THRESHOLD:-0.1}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    env_file:
+      - .env
+    volumes:
+      # Volumen para desarrollo hot-reload (opcional)
+      - ./app:/app/app:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+# Red para comunicación entre servicios (si se añaden más servicios)
+networks:
+  default:
+    name: seo-analysis-network
+
